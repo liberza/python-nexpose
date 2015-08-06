@@ -12,7 +12,7 @@ class Nexpose:
 	def __init__(self, hostname, port):
 		self.hostname = hostname
 		self.port = port
-		self.url = 'https://%s:%s/api/1.2/xml' % (self.hostname, self.port)
+		self.url = 'https://%s:%s/api/1.1/xml' % (self.hostname, self.port)
 		self.session_id = None
 
 		# Often the Nexpose Console is run with a self-signed cert. We allow for that here.
@@ -46,10 +46,26 @@ class Nexpose:
 		xml_string = "<LoginRequest user-id=\"%s\" password=\"%s\" />" % (username, password)
 		xml_response = self.api_request(xml_string)
 		self.session_id = xml_response.attrib.get('session-id')
+		return xml_response
 
 	def logout(self):
 		xml_string = "<LogoutRequest session-id=\"%s\" />" % (self.session_id)
 		xml_response = self.api_request(xml_string)
+		return xml_response
+
+	def site_list(self):
+		xml_string = "<SiteListingRequest session-id=\"%s\"></SiteListingRequest>" % self.session_id
+		xml_response = self.api_request(xml_string)
+		site_list = []
+		for SiteSummary in xml_response.iter('SiteSummary'):
+			site = {}
+			site['id'] = SiteSummary.get('id')
+			site['name'] = SiteSummary.get('name')
+			site['description'] = SiteSummary.get('description')
+			site['riskfactor'] = SiteSummary.get('riskfactor')
+			site['riskscore'] = SiteSummary.get('riskscore')
+			site_list.append(site)
+		return site_list
 
 if __name__ == '__main__':
 	# Usage: ./nexpose.py hostname port username password
@@ -57,4 +73,6 @@ if __name__ == '__main__':
 	result = nexpose.login(sys.argv[3], sys.argv[4])
 	if nexpose.session_id:
 		print(nexpose.session_id)
+		site_list = nexpose.site_list()
+		print(site_list)
 		nexpose.logout()
