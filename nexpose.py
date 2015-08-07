@@ -53,7 +53,7 @@ class Nexpose:
 		xml_response = self.api_request(xml_string)
 		return xml_response
 
-	def site_list(self):
+	def get_site_list(self):
 		xml_string = "<SiteListingRequest session-id=\"%s\"></SiteListingRequest>" % self.session_id
 		xml_response = self.api_request(xml_string)
 		site_list = []
@@ -67,12 +67,25 @@ class Nexpose:
 			site_list.append(site)
 		return site_list
 
+	def get_site_hosts(self, site_id):
+		xml_string = "<SiteConfigRequest session-id=\"%s\" site-id=\"%s\"></SiteConfigRequest>" % (self.session_id, site_id)
+		xml_response = self.api_request(xml_string)
+		host_list = []
+		site = xml_response.find('Site')
+		print(site)
+		hosts = site.find('Hosts')
+		print(hosts)
+		for hostrange in hosts.getchildren():
+			if hostrange.tag == 'range':
+				host_list.append(str('%s-%s' % (hostrange.attrib.get('from'), hostrange.attrib.get('to'))))
+			elif hostrange.tag == 'host':
+				host_list.append(str(host))
+		return host_list
+
 if __name__ == '__main__':
 	# Usage: ./nexpose.py hostname port username password
 	nexpose = Nexpose(sys.argv[1], sys.argv[2])
 	result = nexpose.login(sys.argv[3], sys.argv[4])
 	if nexpose.session_id:
-		print(nexpose.session_id)
-		site_list = nexpose.site_list()
-		print(site_list)
+		print(nexpose.get_site_hosts('1'))
 		nexpose.logout()
