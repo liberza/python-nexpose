@@ -34,12 +34,11 @@ class Nexpose:
 		xml_response = etree.fromstring(response)
 
 		# Check for errors and return response.
-		if not xml_response.tag == 'Failure':
+		if xml_response.attrib.get('success') != '0':
+			print(response)
 			return xml_response
 		else:
-			for exception in xml_response.iter('Exception'):
-				for message in exception.iter('Message'):
-					raise  Exception(str("Failure: " + message.text))
+			raise Exception("Failure")
 
 	# Login function, we must capture the session-id contained in the response if successful.
 	def login(self, username, password):
