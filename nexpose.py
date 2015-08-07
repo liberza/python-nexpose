@@ -7,8 +7,10 @@ import ssl
 
 __author__ = 'Nick Levesque <nick@portcanary.com>'
 
-# Nexpose API wrapper.
 class Nexpose:
+	'''
+	Nexpose API wrapper.
+	'''
 	def __init__(self, hostname, port):
 		self.hostname = hostname
 		self.port = port
@@ -21,8 +23,8 @@ class Nexpose:
 		self.ctx.check_hostname = False
 		self.ctx.verify_mode = ssl.CERT_NONE
 
-	# Generic API request, feed it an xml string and off it goes.
 	def api_request(self, xml_string):
+		'''Send an API request and return the response\'s root XML element.'''
 		# Encode the xml so that urllib will accept it.
 		post_data = (xml_string).encode('utf-8')
 
@@ -42,9 +44,8 @@ class Nexpose:
 		else:
 			raise Exception(response)
 
-	# Login function, we must capture the session-id 
-	# contained in the response if successful.
 	def login(self, username, password):
+	'''Send a LoginRequest and capture the returned session-id.'''
 		xml_string = "<LoginRequest user-id=\"%s\" password=\"%s\" />"\
 					% (username, password)
 		xml_response = self.api_request(xml_string)
@@ -52,12 +53,13 @@ class Nexpose:
 		return xml_response
 
 	def logout(self):
+		'''Send a LogoutRequest.'''
 		xml_string = "<LogoutRequest session-id=\"%s\" />" % (self.session_id)
 		xml_response = self.api_request(xml_string)
 		return xml_response
 
-	# Returns a list of dicts containing site information.
 	def get_sites(self):
+		'''Return a list of dicts containing site information.'''
 		xml_string = "<SiteListingRequest session-id=\"%s\">\
 					</SiteListingRequest>" % self.session_id
 		xml_response = self.api_request(xml_string)
@@ -72,9 +74,8 @@ class Nexpose:
 			site_list.append(site)
 		return site_list
 
-	# Returns a list of hosts for site_id, where hosts can be ranges,
-	# single IPs or hostnames.
 	def get_site_hosts(self, site_id):
+		'''Return list of hosts associated with site_id.'''
 		xml_string = "<SiteConfigRequest session-id=\"%s\" site-id=\"%s\">\
 					</SiteConfigRequest>" % (self.session_id, site_id)
 		xml_response = self.api_request(xml_string)
@@ -92,8 +93,8 @@ class Nexpose:
 				host_list.append(host.text)
 		return host_list
 
-	# Returns a dict of configuration info for site_id.
 	def get_site_scan_config(self, site_id):
+		'''Return a dict of configuration info for site_id.'''
 		xml_string = "<SiteConfigRequest session-id=\"%s\" site-id=\"%s\">\
 					</SiteConfigRequest>" % (self.session_id, site_id)
 		xml_response = self.api_request(xml_string)
@@ -108,6 +109,7 @@ class Nexpose:
 		return config
 		
 	def scan_site(self, site_id):
+		'''Send SiteScanRequest and return the scan_id.'''
 		xml_string = "<SiteScanRequest session-id = \"%s\" site-id=\"%s\">\
 					</SiteScanRequest>" % (self.session_id, site_id)
 		xml_response = self.api_request(xml_string)
