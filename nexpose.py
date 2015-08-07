@@ -85,7 +85,7 @@ class Nexpose:
 		for host in hosts.getchildren():
 			if host.tag == 'range':
 				if host.attrib.get('to') is None:
-					host_list.append({'range' : host.attrib.get('from'))
+					host_list.append({'range' : host.attrib.get('from')})
 				else:
 					host_list.append({'range' : ('%s-%s' % \
 							(host.attrib.get('from'), host.attrib.get('to')))})
@@ -145,17 +145,17 @@ class Nexpose:
 			if ip_range is not None:
 				split_ip_range = ip_range.split('-')
 				if len(split_ip_range) == 1:
-					hosts_string.append('<range from=\"%s\"/>' % \
+					hosts_string += ('<range from=\"%s\"/>' % \
 										str(split_ip_range[0]))
 				elif len(split_ip_range) == 2:
-					hosts_string.append('<range from=\"%s\" to=\"%s\"/>' % \
+					hosts_string += ('<range from=\"%s\" to=\"%s\"/>' % \
 										(split_ip_range[0],
 										split_ip_range[1]))
 				else:
-					raise Exception('Invalid IP range: %s' % ip_range
+					raise Exception('Invalid IP range: %s' % ip_range)
 			else:
 				hostname = host.get('host')
-				hosts_string.append('<host %s/>' % hostname)
+				hosts_string += ('<host %s/>' % hostname)
 				
 		xml_string = '<SiteDevicesScanRequest session-id=\"%s\" \
 					site-id=\"%s\"><Devices></Devices><Hosts>%s</Hosts>\
@@ -174,7 +174,10 @@ if __name__ == '__main__':
 	try:
 		nexpose = Nexpose(sys.argv[1], sys.argv[2])
 		nexpose.login(sys.argv[3], sys.argv[4])
-		scan = nexpose.scan_site_devices('2')
+		host_list = nexpose.get_site_hosts('2')
+		print(host_list)
+		scan = nexpose.scan_site_hosts('2', host_list)
+		print(scan)
 		print(nexpose.get_scan_summary(scan_id=scan['scan_id'],
 										engine_id=scan['engine_id']))
 		nexpose.logout()
