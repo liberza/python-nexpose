@@ -53,7 +53,7 @@ class Nexpose:
 		xml_response = self.api_request(xml_string)
 		return xml_response
 
-	def get_site_list(self):
+	def get_sites(self):
 		xml_string = "<SiteListingRequest session-id=\"%s\"></SiteListingRequest>" % self.session_id
 		xml_response = self.api_request(xml_string)
 		site_list = []
