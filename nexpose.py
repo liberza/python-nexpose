@@ -35,10 +35,9 @@ class Nexpose:
 
 		# Check for errors and return response.
 		if xml_response.attrib.get('success') != '0':
-			print(response)
 			return xml_response
 		else:
-			raise Exception("Failure")
+			raise Exception(response)
 
 	# Login function, we must capture the session-id contained in the response if successful.
 	def login(self, username, password):
@@ -83,8 +82,14 @@ class Nexpose:
 
 if __name__ == '__main__':
 	# Usage: ./nexpose.py hostname port username password
-	nexpose = Nexpose(sys.argv[1], sys.argv[2])
-	result = nexpose.login(sys.argv[3], sys.argv[4])
-	if nexpose.session_id:
+	try:
+		nexpose = Nexpose(sys.argv[1], sys.argv[2])
+		result = nexpose.login(sys.argv[3], sys.argv[4])
 		print(nexpose.get_site_hosts('1'))
 		nexpose.logout()
+	except Exception as e:
+		try:
+			nexpose.logout()
+		except:
+			pass
+		raise e
