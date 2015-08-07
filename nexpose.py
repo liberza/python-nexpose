@@ -45,8 +45,8 @@ class Nexpose:
 			raise Exception(response)
 
 	def login(self, username, password):
-	'''Send a LoginRequest and capture the returned session-id.'''
-		xml_string = "<LoginRequest user-id=\"%s\" password=\"%s\" />"\
+		'''Send a LoginRequest and capture the returned session-id.'''
+		xml_string = '<LoginRequest user-id=\"%s\" password=\"%s\" />'\
 					% (username, password)
 		xml_response = self.api_request(xml_string)
 		self.session_id = xml_response.attrib.get('session-id')
@@ -60,8 +60,8 @@ class Nexpose:
 
 	def get_sites(self):
 		'''Return a list of dicts containing site information.'''
-		xml_string = "<SiteListingRequest session-id=\"%s\">\
-					</SiteListingRequest>" % self.session_id
+		xml_string = '<SiteListingRequest session-id=\"%s\">\
+					</SiteListingRequest>' % self.session_id
 		xml_response = self.api_request(xml_string)
 		site_list = []
 		for SiteSummary in xml_response.iter('SiteSummary'):
@@ -75,9 +75,9 @@ class Nexpose:
 		return site_list
 
 	def get_site_hosts(self, site_id):
-		'''Return list of hosts associated with site_id.'''
-		xml_string = "<SiteConfigRequest session-id=\"%s\" site-id=\"%s\">\
-					</SiteConfigRequest>" % (self.session_id, site_id)
+		'''Return list of ranges and hostnames associated with a site.'''
+		xml_string = '<SiteConfigRequest session-id=\"%s\" site-id=\"%s\">\
+					</SiteConfigRequest>' % (self.session_id, site_id)
 		xml_response = self.api_request(xml_string)
 		host_list = []
 		site = xml_response.find('Site')
@@ -94,9 +94,9 @@ class Nexpose:
 		return host_list
 
 	def get_site_scan_config(self, site_id):
-		'''Return a dict of configuration info for site_id.'''
-		xml_string = "<SiteConfigRequest session-id=\"%s\" site-id=\"%s\">\
-					</SiteConfigRequest>" % (self.session_id, site_id)
+		'''Return a dict of configuration info for a site.'''
+		xml_string = '<SiteConfigRequest session-id=\"%s\" site-id=\"%s\">\
+					</SiteConfigRequest>' % (self.session_id, site_id)
 		xml_response = self.api_request(xml_string)
 		site = xml_response.find('Site')
 		scan_config = site.find('ScanConfig')
@@ -109,12 +109,21 @@ class Nexpose:
 		return config
 		
 	def scan_site(self, site_id):
-		'''Send SiteScanRequest and return the scan_id.'''
-		xml_string = "<SiteScanRequest session-id = \"%s\" site-id=\"%s\">\
-					</SiteScanRequest>" % (self.session_id, site_id)
+		'''Send SiteScanRequest and return dict of scan id and engine id.'''
+		xml_string = '<SiteScanRequest session-id = \"%s\" site-id=\"%s\">\
+					</SiteScanRequest>' % (self.session_id, site_id)
 		xml_response = self.api_request(xml_string)
-		scan_id = xml_response.find('Scan').attrib.get('scan-id')
-		return scan_id
+		scan = xml_response.find('Scan')
+		scan_id = scan.attrib.get('scan-id')
+		engine_id = scan.attrib.get('engine-id')
+		return {'scan_id' : scan_id, 'engine_id' : engine_id}
+
+	def scan_site_devices(self, site_id, host_list):
+		'''
+		Send SiteDevicesScanRequest and return dict of scan id 
+		and engine id. host_list is a list of host ranges or hostnames.
+		'''
+		xml_string = ''
 		
 
 if __name__ == '__main__':
