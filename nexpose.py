@@ -108,13 +108,22 @@ class Nexpose:
 		config['config_version'] = scan_config.attrib.get('configVersion')
 		return config
 		
-	def get_scan_summary(self, scan_id, engine_id):
+	def get_scan_summary_attributes(self, scan_id, engine_id):
+		'''
+		Send a ScanStatisticsRequest and return the ScanSummary 
+		attributes as a dict.
+		'''
 		xml_string = '<ScanStatisticsRequest session-id = \"%s\" \
 					engine-id = \"%s\" scan-id = \"%s\">\
 					</ScanStatisticsRequest>' % \
 					(self.session_id, engine_id, scan_id)
 		xml_response = self.api_request(xml_string)
-		print(ET.tostring(xml_response, encoding='ascii', method='xml'))
+		scan_summary = xml_response.find('ScanSummary')
+		scan_summary_attributes = {}
+		for key in scan_summary.attrib:
+			scan_summary_attributes[key] = scan_summary.attrib[key]
+		return scan_summary_attributes
+		
 
 	def scan_site(self, site_id):
 		'''Send SiteScanRequest and return dict of scan id and engine id.'''
@@ -136,8 +145,9 @@ class Nexpose:
 
 	def scan_site_hosts(self, site_id, host_list):
 		'''
-		Send SiteDevicesScanRequest and return dict of scan id 
-		and engine id. devices is a list of device ids.
+		Send SiteDevicesScanRequest and return dict of scan id and engine
+		id. host_list is a list of ranges or hostnames as get_site_hosts()
+		would return.
 		'''
 		hosts_string = ''
 		for host in host_list:
@@ -167,19 +177,13 @@ class Nexpose:
 		scan_id = scan.attrib.get('scan-id')
 		engine_id = scan.attrib.get('engine-id')
 		return {'scan_id': scan_id, 'engine_id' : engine_id}
-		
 
 if __name__ == '__main__':
 	# Usage: ./nexpose.py hostname port username password
 	try:
 		nexpose = Nexpose(sys.argv[1], sys.argv[2])
 		nexpose.login(sys.argv[3], sys.argv[4])
-		host_list = nexpose.get_site_hosts('2')
-		print(host_list)
-		scan = nexpose.scan_site_hosts('2', host_list)
-		print(scan)
-		print(nexpose.get_scan_summary(scan_id=scan['scan_id'],
-										engine_id=scan['engine_id']))
+		print(nexpose.get_scan_summary_attributes('15', '3'))
 		nexpose.logout()
 	except Exception as e:
 		try:
