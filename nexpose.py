@@ -85,12 +85,12 @@ class Nexpose:
 		for host in hosts.getchildren():
 			if host.tag == 'range':
 				if host.attrib.get('to') is None:
-					host_list.append(str(host.attrib.get('from')))
+					host_list.append({'range' : host.attrib.get('from'))
 				else:
-					host_list.append(str('%s-%s' % \
-							(host.attrib.get('from'), host.attrib.get('to'))))
+					host_list.append({'range' : ('%s-%s' % \
+							(host.attrib.get('from'), host.attrib.get('to')))})
 			elif host.tag == 'host':
-				host_list.append(host.text)
+				host_list.append({'host' : host.text})
 		return host_list
 
 	def get_site_scan_config(self, site_id):
@@ -108,6 +108,14 @@ class Nexpose:
 		config['config_version'] = scan_config.attrib.get('configVersion')
 		return config
 		
+	def get_scan_summary(self, scan_id, engine_id):
+		xml_string = '<ScanStatisticsRequest session-id = \"%s\" \
+					engine-id = \"%s\" scan-id = \"%s\">\
+					</ScanStatisticsRequest>' % \
+					(self.session_id, engine_id, scan_id)
+		xml_response = self.api_request(xml_string)
+		print(ET.tostring(xml_response, encoding='ascii', method='xml'))
+
 	def scan_site(self, site_id):
 		'''Send SiteScanRequest and return dict of scan id and engine id.'''
 		xml_string = '<SiteScanRequest session-id = \"%s\" site-id=\"%s\">\
@@ -118,20 +126,57 @@ class Nexpose:
 		engine_id = scan.attrib.get('engine-id')
 		return {'scan_id' : scan_id, 'engine_id' : engine_id}
 
-	def scan_site_devices(self, site_id, host_list):
+	def get_site_devices(self, site_id):
+		'''Return a list of devices in a site.'''
+		xml_string = '<SiteDeviceListingRequest session-id = \"%s\" \
+					site-id = \"%s\"></SiteDeviceListingRequest>' % \
+					(self.session_id, site_id)
+		xml_response = self.api_request(xml_string)
+		print(ET.tostring(xml_response, encoding='ascii', method='xml'))
+
+	def scan_site_hosts(self, site_id, host_list):
 		'''
 		Send SiteDevicesScanRequest and return dict of scan id 
-		and engine id. host_list is a list of host ranges or hostnames.
+		and engine id. devices is a list of device ids.
 		'''
-		xml_string = ''
+		hosts_string = ''
+		for host in host_list:
+			ip_range = host.get('range')
+			if ip_range is not None:
+				split_ip_range = ip_range.split('-')
+				if len(split_ip_range) == 1:
+					hosts_string.append('<range from=\"%s\"/>' % \
+										str(split_ip_range[0]))
+				elif len(split_ip_range) == 2:
+					hosts_string.append('<range from=\"%s\" to=\"%s\"/>' % \
+										(split_ip_range[0],
+										split_ip_range[1]))
+				else:
+					raise Exception('Invalid IP range: %s' % ip_range
+			else:
+				hostname = host.get('host')
+				hosts_string.append('<host %s/>' % hostname)
+				
+		xml_string = '<SiteDevicesScanRequest session-id=\"%s\" \
+					site-id=\"%s\"><Devices></Devices><Hosts>%s</Hosts>\
+					</SiteDevicesScanRequest>' % (self.session_id,
+												site_id,
+												hosts_string)
+		xml_response = self.api_request(xml_string)
+		scan = xml_response.find('Scan')
+		scan_id = scan.attrib.get('scan-id')
+		engine_id = scan.attrib.get('engine-id')
+		return {'scan_id': scan_id, 'engine_id' : engine_id}
 		
 
 if __name__ == '__main__':
 	# Usage: ./nexpose.py hostname port username password
 	try:
 		nexpose = Nexpose(sys.argv[1], sys.argv[2])
-		result = nexpose.login(sys.argv[3], sys.argv[4])
-		print(nexpose.scan_site('2'))
+		nexpose.login(sys.argv[3], sys.argv[4])
+		scan = nexpose.scan_site_devices('2')
+		print(nexpose.get_scan_summary(scan_id=scan['scan_id'],
+										engine_id=scan['engine_id']))
 		nexpose.logout()
 	except Exception as e:
 		try:
