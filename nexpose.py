@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import xml.etree.ElementTree as etree
+import defusedxml.ElementTree as etree
 import urllib.request
 import urllib.parse
 import sys
