@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import defusedxml.ElementTree as etree
+import defusedxml.ElementTree as ET
 import urllib.request
 import urllib.parse
 import sys
@@ -31,7 +31,7 @@ class Nexpose:
 
 		# Get a response.
 		response = urllib.request.urlopen(request, post_data, context=self.ctx).read()
-		xml_response = etree.fromstring(response)
+		xml_response = ET.fromstring(response)
 
 		# Check for errors and return response.
 		if xml_response.attrib.get('success') != '0':
