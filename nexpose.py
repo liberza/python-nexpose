@@ -15,7 +15,8 @@ class Nexpose:
 		self.url = 'https://%s:%s/api/1.1/xml' % (self.hostname, self.port)
 		self.session_id = None
 
-		# Often the Nexpose Console is run with a self-signed cert. We allow for that here.
+		# Often the Nexpose Console is run with a self-signed cert. 
+		# We allow for that here.
 		self.ctx = ssl.create_default_context()
 		self.ctx.check_hostname = False
 		self.ctx.verify_mode = ssl.CERT_NONE
@@ -30,7 +31,9 @@ class Nexpose:
 		request.add_header("Content-type", "text/xml")
 
 		# Get a response.
-		response = urllib.request.urlopen(request, post_data, context=self.ctx).read()
+		response = urllib.request.urlopen(request, 
+										post_data, 
+										context=self.ctx).read()
 		xml_response = ET.fromstring(response)
 
 		# Check for errors and return response.
@@ -39,9 +42,11 @@ class Nexpose:
 		else:
 			raise Exception(response)
 
-	# Login function, we must capture the session-id contained in the response if successful.
+	# Login function, we must capture the session-id 
+	# contained in the response if successful.
 	def login(self, username, password):
-		xml_string = "<LoginRequest user-id=\"%s\" password=\"%s\" />" % (username, password)
+		xml_string = "<LoginRequest user-id=\"%s\" password=\"%s\" />"\
+					% (username, password)
 		xml_response = self.api_request(xml_string)
 		self.session_id = xml_response.attrib.get('session-id')
 		return xml_response
@@ -51,8 +56,10 @@ class Nexpose:
 		xml_response = self.api_request(xml_string)
 		return xml_response
 
+	# Returns a list of dicts containing site information.
 	def get_sites(self):
-		xml_string = "<SiteListingRequest session-id=\"%s\"></SiteListingRequest>" % self.session_id
+		xml_string = "<SiteListingRequest session-id=\"%s\">\
+					</SiteListingRequest>" % self.session_id
 		xml_response = self.api_request(xml_string)
 		site_list = []
 		for SiteSummary in xml_response.iter('SiteSummary'):
@@ -65,30 +72,50 @@ class Nexpose:
 			site_list.append(site)
 		return site_list
 
+	# Returns a list of hosts for site_id, where hosts can be ranges,
+	# single IPs or hostnames.
 	def get_site_hosts(self, site_id):
-		xml_string = "<SiteConfigRequest session-id=\"%s\" site-id=\"%s\"></SiteConfigRequest>" % (self.session_id, site_id)
+		xml_string = "<SiteConfigRequest session-id=\"%s\" site-id=\"%s\">\
+					</SiteConfigRequest>" % (self.session_id, site_id)
 		xml_response = self.api_request(xml_string)
 		host_list = []
 		site = xml_response.find('Site')
-		print(site)
 		hosts = site.find('Hosts')
-		print(hosts)
 		for host in hosts.getchildren():
 			if host.tag == 'range':
 				if host.attrib.get('to') is None:
 					host_list.append(str(host.attrib.get('from')))
 				else:
-					host_list.append(str('%s-%s' % (host.attrib.get('from'), host.attrib.get('to'))))
+					host_list.append(str('%s-%s' % \
+							(host.attrib.get('from'), host.attrib.get('to'))))
 			elif host.tag == 'host':
 				host_list.append(host.text)
 		return host_list
+
+	# Returns a dict of configuration info for site_id.
+	def get_site_scan_config(self, site_id):
+		xml_string = "<SiteConfigRequest session-id=\"%s\" site-id=\"%s\">\
+					</SiteConfigRequest>" % (self.session_id, site_id)
+		xml_response = self.api_request(xml_string)
+		site = xml_response.find('Site')
+		scan_config = site.find('ScanConfig')
+		config = {}
+		config['template_id'] = scan_config.attrib.get('templateID')
+		config['name'] = scan_config.attrib.get('name')
+		config['id'] = scan_config.attrib.get('configID')
+		config['engine_id'] = scan_config.attrib.get('engineID')
+		config['config_version'] = scan_config.attrib.get('configVersion')
+		return config
+		
+#	def scan_site(self, site_id):
+		
 
 if __name__ == '__main__':
 	# Usage: ./nexpose.py hostname port username password
 	try:
 		nexpose = Nexpose(sys.argv[1], sys.argv[2])
 		result = nexpose.login(sys.argv[3], sys.argv[4])
-		print(nexpose.get_site_hosts('3'))
+		print(nexpose.get_site_scan_config('3'))
 		nexpose.logout()
 	except Exception as e:
 		try:
