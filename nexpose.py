@@ -37,7 +37,7 @@ class Nexpose:
 		xml_response = ET.fromstring(response)
 
 		# Check for errors and return response.
-		if xml_response.attrib.get('success') != '0':
+		if xml_response.attrib.get('success') != ('0' or None):
 			return xml_response
 		else:
 			raise Exception(response)
@@ -107,7 +107,12 @@ class Nexpose:
 		config['config_version'] = scan_config.attrib.get('configVersion')
 		return config
 		
-#	def scan_site(self, site_id):
+	def scan_site(self, site_id):
+		xml_string = "<SiteScanRequest session-id = \"%s\" site-id=\"%s\">\
+					</SiteScanRequest>" % (self.session_id, site_id)
+		xml_response = self.api_request(xml_string)
+		scan_id = xml_response.find('Scan').attrib.get('scan-id')
+		return scan_id
 		
 
 if __name__ == '__main__':
@@ -115,7 +120,7 @@ if __name__ == '__main__':
 	try:
 		nexpose = Nexpose(sys.argv[1], sys.argv[2])
 		result = nexpose.login(sys.argv[3], sys.argv[4])
-		print(nexpose.get_site_scan_config('3'))
+		print(nexpose.scan_site('2'))
 		nexpose.logout()
 	except Exception as e:
 		try:
