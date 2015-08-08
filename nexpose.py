@@ -7,6 +7,10 @@ import ssl
 
 __author__ = 'Nick Levesque <nick@portcanary.com>'
 
+class NexposeException(Exception):
+	'''Raise this exception when the Nexpose API returns errors.'''
+	pass
+
 class Nexpose:
 	'''
 	Nexpose API wrapper.
@@ -42,7 +46,7 @@ class Nexpose:
 		if xml_response.attrib.get('success') != ('0' or None):
 			return xml_response
 		else:
-			raise Exception(response)
+			raise NexposeException(response)
 
 	def login(self, username, password):
 		'''Send a LoginRequest and capture the returned session-id.'''
