@@ -183,11 +183,12 @@ if __name__ == '__main__':
 	try:
 		nexpose = Nexpose(sys.argv[1], sys.argv[2])
 		nexpose.login(sys.argv[3], sys.argv[4])
-		print(nexpose.get_scan_summary_attributes('15', '3'))
+		print(nexpose.get_scan_summary_attributes('14', '3'))
+	except urllib.error.URLError as e:
+		print("URLError: Perhaps you entered the wrong URL or port?")
+		exit()
+	try:
 		nexpose.logout()
-	except Exception as e:
-		try:
-			nexpose.logout()
-		except:
-			pass
-		raise e
+	except:
+		print('Tried to logout when we weren\'t signed in.')
+		pass
