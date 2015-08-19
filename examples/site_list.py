@@ -9,5 +9,5 @@ if __name__ == '__main__':
 	nexpose = Nexpose(sys.argv[1], sys.argv[2])
 	result = nexpose.login(sys.argv[3], sys.argv[4])
 	if nexpose.session_id:
-		print(nexpose.site_list())
+		print(nexpose.get_sites())
 		nexpose.logout()

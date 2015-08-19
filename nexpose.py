@@ -187,9 +187,9 @@ if __name__ == '__main__':
 	try:
 		nexpose = Nexpose(sys.argv[1], sys.argv[2])
 		nexpose.login(sys.argv[3], sys.argv[4])
-		print(nexpose.get_scan_summary_attributes('14', '3'))
+		print(nexpose.get_site_scan_config('1'))
 	except urllib.error.URLError as e:
-		print("URLError: Perhaps you entered the wrong URL or port?")
+		print("URLError: Perhaps you entered the wrong URL or port? %s" % e)
 		exit()
 	try:
 		nexpose.logout()
