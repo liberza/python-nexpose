@@ -170,7 +170,7 @@ class Nexpose:
 			else:
 				hostname = host.get('host')
 				hostname = hostname.replace("'","")
-				hosts_string += ('<host %s/>' % hostname)
+				hosts_string += ('<host>%s</host>' % hostname)
 				
 		xml_string = '<SiteDevicesScanRequest session-id=\"%s\" \
 					site-id=\"%s\"><Devices></Devices><Hosts>%s</Hosts>\
