@@ -169,6 +169,7 @@ class Nexpose:
 					raise Exception('Invalid IP range: %s' % ip_range)
 			else:
 				hostname = host.get('host')
+				hostname = hostname.replace("'","")
 				hosts_string += ('<host %s/>' % hostname)
 				
 		xml_string = '<SiteDevicesScanRequest session-id=\"%s\" \
