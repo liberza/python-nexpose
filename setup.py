@@ -1,6 +1,6 @@
 from setuptools import setup
 
 setup(
-    name='python-nexpose',
+    name='nexpose',
     version='0.1',
 )
